@@ -19,7 +19,7 @@ var EASY_MODE_COUNT = 20;
 var HIGHLIGHT_DELAY = 1500;
 var NEXT_GUESS_DELAY = 1000;
 
-var REMOVE_NEIGHBORHOOD_ANIMATE_GUESS_DELAY = 2000;
+var REMOVE_NEIGHBORHOOD_ANIMATE_GUESS_DELAY = 1000;
 
 var SMALL_NEIGHBORHOOD_THRESHOLD_MOUSE = 8;
 var SMALL_NEIGHBORHOOD_THRESHOLD_TOUCH = 30;
@@ -45,7 +45,8 @@ var ADD_YOUR_CITY_URL =
 var MAPS_DEFAULT_SCALE = 512;
 var D3_DEFAULT_SCALE = 500;
 
-var FACEBOOK_APP_ID = '179106222254519';
+var FACEBOOK_APP_ID = '777235462302407';
+var FB_PICTURE = 'http://youdontknowafrica.com/public/images/screenshot3.png';
 
 var startTime = 0;
 var timerIntervalId;
@@ -76,7 +77,6 @@ var smallNeighborhoodThreshold;
 
 var canvasWidth, canvasHeight;
 var mapWidth, mapHeight;
-var lastMapWidth;
 
 var centerLat, centerLon;
 var latSpread, lonSpread;
@@ -134,7 +134,7 @@ function calculateMapSize() {
     geoMapPath = d3.geo.path().projection(
         d3.geo.mercator().center([0, 0]).
         scale(640 / 6.3).
-        translate([256 + 512 + 213 - 88 + (mapWidth % 640) / 2 - 621 / 2, 256]));
+        translate([256 + 512 - 80, 256]));
   } else {
     // TODO const
     var minLat = 99999999;
@@ -229,7 +229,7 @@ function createSvg() {
 }
 
 function loadGeoData() {
-  var url = 'data/' + cityId + '.geojson';
+  var url = 'public/data/' + cityId + '.geojson';
   queue().defer(d3.json, url).await(onGeoDataLoad);
 }
 
@@ -292,19 +292,7 @@ function prepareMainMenuMapBackground() {
   var map = mapbox.map(document.querySelector('#maps-background'), layer, null, []);
   map.tileSize = { x: Math.round(320 / pixelRatio), 
                    y: Math.round(320 / pixelRatio) };
-  map.centerzoom({ lat: 26, lon: 63 - 120 }, pixelRatio);
-
-  lastMapWidth = document.querySelector('#maps-background').offsetWidth;
-
-  // This keeps the map centered on the homepage
-  map.addCallback('resized', function(map, dimensions) {
-    //lastMapWidth = document.querySelector('#maps-background').offsetWidth;
-
-    var width = dimensions[0].x;
-    var delta = width - lastMapWidth;
-    map.panBy(-Math.floor(delta / 2), 0);
-    lastMapWidth += Math.floor(delta / 2) * 2;
-  });
+  map.centerzoom({ lat: 26, lon: 63 }, pixelRatio);
 }
 
 function isString(obj) {
@@ -522,7 +510,7 @@ function setTouchActive(newTouchActive) {
 
   var els = document.querySelectorAll('.click-verb');
   for (var i = 0, el; el = els[i]; i++) {
-    el.innerHTML = touchActive ? 'touch' : 'click';
+    el.innerHTML = touchActive ? 'tap' : 'click';
   }
 }
 
@@ -895,9 +883,8 @@ function gameOver() {
 }
 
 function getSharingMessage() {
-  return 'I just played Click That ’Hood and identified ' + 
-      neighborhoodsGuessed.length + ' ' + CITY_DATA[cityId].locationName + ' ' + 
-      getNeighborhoodNoun(true) + ' in ' + getTimer() + '. Try to beat me!';
+  return 'I just played #YouDontKnowAfrica and identified ' + 
+      neighborhoodsGuessed.length + ' African countries in ' + getTimer() + '. Can you do better?';
 }
 
 function updateFacebookLink(congratsEl) {
@@ -909,9 +896,11 @@ function updateFacebookLink(congratsEl) {
   el.href = 'https://www.facebook.com/dialog/feed?' +
       'app_id=' + FACEBOOK_APP_ID +
       '&redirect_uri=' + encodeURIComponent(url) + 
+      '&display=page' +
       '&link=' + encodeURIComponent(url) + 
-      '&name=' + encodeURIComponent('Click That ’Hood') +
-      '&description=' + encodeURIComponent(text);
+      '&name=' + encodeURIComponent('You Don\'t Know Africa') +
+      '&description=' + encodeURIComponent(text) +
+      '&picture=' + FB_PICTURE;
 }
 
 function updateTwitterLink(congratsEl) {
@@ -921,7 +910,7 @@ function updateTwitterLink(congratsEl) {
   var url = location.href;
 
   el.href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + 
-      '&url=' + encodeURIComponent(url);
+      '&url=' + encodeURIComponent(url) + '&via=davidbauer';
 }
 
 function updateEmailLink(congratsEl) {
@@ -930,7 +919,7 @@ function updateEmailLink(congratsEl) {
   var text = getSharingMessage();
   var url = location.href;
 
-  el.href = 'mailto:?subject=You will like this game: Click That \'Hood&body=' + text + 
+  el.href = 'mailto:?subject=You will like this game: You Don\'t Know Africa&body=' + text + 
       ' ' + url;
 }
 
@@ -1047,13 +1036,13 @@ function onResize() {
 
   if (mainMenu) {
     calculateMapSize();
-    //createMainMenuMap();
 
     if (window.innerHeight > MAIN_MENU_MIN_FIXED_HEIGHT) {
       document.body.classList.remove('no-fixed-main-menu');
     } else {
       document.body.classList.add('no-fixed-main-menu');      
     }
+
   } else {
     if (geoDataLoaded) {
       calculateMapSize();
@@ -1074,7 +1063,9 @@ function onResize() {
 }
 
 function getCityId() {
-  var cityMatch = location.href.match(/[\?\&](city|location)=([^&]*)/);
+  cityId = "africa";
+  
+  /*var cityMatch = location.href.match(/[\?\&](city|location)=([^&]*)/);
 
   if (cityMatch && cityMatch[2]) {
     if (CITY_DATA[cityMatch[2]]) {
@@ -1084,7 +1075,7 @@ function getCityId() {
 
   if (!cityId) {
     mainMenu = true;
-  }
+  }*/
 }
 
 function updateFooter() {
@@ -1097,10 +1088,10 @@ function updateFooter() {
   }
 
   if (CITY_DATA[cityId].authorTwitter) {
-    document.querySelector('footer .author a').href = 
+    /*document.querySelector('footer .author a').href = 
         'http://twitter.com/' + CITY_DATA[cityId].authorTwitter;
     document.querySelector('footer .author a').innerHTML = 
-        '@' + CITY_DATA[cityId].authorTwitter;
+        '@' + CITY_DATA[cityId].authorTwitter;*/
     document.querySelector('footer .author').classList.add('visible');
   } 
 }
@@ -1131,20 +1122,9 @@ function getNeighborhoodNoun(plural) {
 function prepareLogo() {
   var name = CITY_DATA[cityId].stateName || CITY_DATA[cityId].countryName || '';
 
-  if (!name || (name == COUNTRY_NAME_USA)) {
-    name = '';
-    document.querySelector('header .location-name').classList.add('no-state-or-country');
-  } else {
-    document.querySelector('header .location-name').classList.remove('no-state-or-country');    
-  }
-  document.querySelector('header .state-or-country').innerHTML = name;
-
-  document.querySelector('header .annotation').innerHTML = 
-      CITY_DATA[cityId].annotation || '';
-
   var els = document.querySelectorAll('.location-name');
   for (var i = 0, el; el = els[i]; i++) {
-    el.innerHTML = CITY_DATA[cityId].locationName;
+    // el.innerHTML = CITY_DATA[cityId].locationName;
   }
 
   var neighborhoodNoun = getNeighborhoodNoun(false);
@@ -1191,13 +1171,17 @@ function prepareLocationList() {
 
       el.setAttribute('city-id', ids[id]);
 
-      if (!cityData.stateName && !cityData.countryName) {
-        var url = '?location=' + ids[id];
-      } else {
-        var url = '?city=' + ids[id];        
+      if (!cityData.stateName && !cityData.countryName && ids[id] != "africa") {
+        var url = 'http://www.click-that-hood.com/?location=' + ids[id];
+      }       
+      else if (ids[id] == "africa") {
+	    var url = '?location=' + ids[id];  
+      }
+      else {
+        var url = 'http://www.click-that-hood.com/?city=' + ids[id];        
       }
 
-      var html = '<a href="' + url + '">';
+      var html = '<a href="' + url + '" target="_blank">';
 
       html += cityData.longLocationName || cityData.locationName;
       if (cityData.annotation) {
@@ -1306,11 +1290,13 @@ function receiveGeolocation(position) {
   }
 }
 
+
 function prepareGeolocation() {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(receiveGeolocation);
   }
 }
+
 
 function onMoreCitiesClick() {
   document.body.scrollTop = window.innerHeight;
@@ -1327,40 +1313,34 @@ function testBrowser() {
 }
 
 function main() {
-  if (testBrowser()) {
+	
+  if (testBrowser() && screen.width >= 500) {
 
     window.addEventListener('load', onBodyLoad, false);
     window.addEventListener('resize', onResize, false);
-
-    document.querySelector('#more-cities-wrapper div').
-        addEventListener('click', onMoreCitiesClick, false);
 
     removeHttpsIfPresent();
 
     getEnvironmentInfo();
     getCityId();
 
-    prepareLocationList();
-    prepareGeolocation();
-
     onResize();
 
-    if (mainMenu) {
-      prepareMainMenu();
-      prepareMainMenuMapBackground();
+    document.querySelector('#cover').classList.add('visible');
+    document.querySelector('#loading').classList.add('visible');
 
-      createSvg();
-      calculateMapSize();
-      createMainMenuMap();
-    } else {
-      document.querySelector('#cover').classList.add('visible');
-      document.querySelector('#loading').classList.add('visible');
+    // prepareLogo();
+    updateFooter();
+	loadGeoData();
+    createSvg();
 
-      prepareLogo();
-      updateFooter();
-      createSvg();
-      loadGeoData();
-    }
+    
+    document.querySelector('#more-cities-wrapper div').
+        addEventListener('click', onMoreCitiesClick, false);
+    
+    prepareLocationList();
+
+    
 
     onResize();
   }
